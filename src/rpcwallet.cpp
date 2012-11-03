@@ -352,12 +352,15 @@ Value verifymessage(const Array& params, bool fHelp)
     string strMessage  = params[2].get_str();
 
     CBitcoinAddress addr(strAddress);
-    if (!addr.IsValid())
-        throw JSONRPCError(-3, "Invalid address");
-
     CKeyID keyID;
-    if (!addr.GetKeyID(keyID))
-        throw JSONRPCError(-3, "Address does not refer to key");
+
+    if (strAddress.compare("?")!=0) {
+        if (!addr.IsValid())
+            throw JSONRPCError(-3, "Invalid address");
+
+        if (!addr.GetKeyID(keyID))
+            throw JSONRPCError(-3, "Address does not refer to key");
+    }
 
     bool fInvalid = false;
     vector<unsigned char> vchSig = DecodeBase64(strSign.c_str(), &fInvalid);
@@ -373,9 +376,13 @@ Value verifymessage(const Array& params, bool fHelp)
     if (!key.SetCompactSignature(Hash(ss.begin(), ss.end()), vchSig))
         return false;
 
-    return (key.GetPubKey().GetID() == keyID);
+    if (strAddress.compare("?")!=0)
+    {
+        return (key.GetPubKey().GetID() == keyID);
+    }else{
+        return CBitcoinAddress(key.GetPubKey().GetID()).ToString();
+    }
 }
-
 
 Value getreceivedbyaddress(const Array& params, bool fHelp)
 {
